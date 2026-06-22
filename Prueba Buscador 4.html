@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>BUSCADOR DE ELECTIVOS</title>
+        <style>
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap");
+
+:root {
+    --color-oscurisimo: #382620;
+    --color-oscuro: #87bba2;
+    --color-normal: #500303;
+    --color-iluminado: #d0e1cb;
+    --color-iluminadisimo: #f1e379;
+    --fuente: "Source Code Pro", monospace;
+}
+
+body {
+    font-family: var(--fuente);
+    color: var(--color-normal);
+    text-align: center;
+    font-size: 100%;
+}
+
+a {
+    color: var(--color-oscuro);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--color-oscurisimo);
+    text-decoration: underline;
+}
+
+div#contenedor {
+    margin: 1rem auto;
+    width: 90%;
+    max-width: 980px;
+}
+
+h1 {
+    margin: 1rem 0;
+    font-weight: 400;
+    font-size: calc(100% + 3vw + 3vh);
+}
+
+h2 {
+    margin: 2rem 0 1rem;
+    font-weight: 400;
+    letter-spacing: 0.25rem;
+    font-size: calc(100% + 1vw + 1vh);
+    color: var(--color-oscuro);
+}
+
+
+
+#planificador {
+    border: 1px solid var(--color-iluminado);
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    text-align: left;
+}
+
+.paso-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+    color: var(--color-oscuro);
+    margin-bottom: 0.5rem;
+}
+
+.paso-titulo {
+    font-size: 0.95rem;
+    color: var(--color-normal);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+
+.menciones-btns {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.btn-mencion {
+    font-family: var(--fuente);
+    font-size: 0.85rem;
+    padding: 0.45rem 1.1rem;
+    border: 1px solid var(--color-normal);
+    background: transparent;
+    color: var(--color-normal);
+    cursor: pointer;
+    letter-spacing: 0.05rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-mencion:hover {
+    background: var(--color-iluminado);
+}
+
+.btn-mencion.activo {
+    background: var(--color-normal);
+    color: white;
+}
+
+
+#contenedor-tabla-plan {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+}
+
+#tabla-plan {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.82rem;
+}
+
+#tabla-plan thead th {
+    background: var(--color-normal);
+    color: white;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-normal);
+    font-weight: 400;
+    letter-spacing: 0.05rem;
+    white-space: nowrap;
+    position: relative;
+    cursor: default;
+    user-select: none;
+}
+
+
+#tabla-plan thead th.col-arrastrable {
+    cursor: grab;
+}
+
+#tabla-plan thead th.col-arrastrable:active {
+    cursor: grabbing;
+}
+
+#tabla-plan thead th.dragging-over {
+    outline: 2px dashed var(--color-iluminadisimo);
+    outline-offset: -2px;
+}
+
+#tabla-plan thead th .col-num {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    font-size: 0.68rem;
+    padding: 0 0.3rem;
+    margin-right: 0.4rem;
+    border-radius: 2px;
+}
+
+#tabla-plan tbody td {
+    border: 1px solid var(--color-iluminado);
+    padding: 0.6rem 0.75rem;
+    vertical-align: top;
+    color: var(--color-normal);
+}
+
+
+#tabla-plan .fila-troncal td {
+    background: var(--color-iluminadisimo);
+    color: var(--color-oscurisimo);
+    font-weight: 600;
+}
+
+
+#tabla-plan .fila-electivo td {
+    background: white;
+    font-style: italic;
+    color: var(--color-oscuro);
+    font-weight: 800;
+}
+
+#tabla-plan .celda-fija {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--color-iluminado);
+    width: 2.5rem;
+    min-width: 2.5rem;
+}
+
+#tabla-plan td.celda-vacia {
+    color: var(--color-iluminado);
+    font-style: normal;
+    font-size: 0.78rem;
+}
+
+.btn-quitar {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-normal);
+    font-size: 0.9rem;
+    padding: 0 0.3rem;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.btn-quitar:hover { opacity: 1; }
+
+#estado-vacio {
+    text-align: center;
+    color: var(--color-iluminado);
+    font-size: 0.82rem;
+    padding: 1.5rem 0 0.5rem;
+    display: none;
+}
+
+#instruccion-paso2 {
+    font-size: 0.78rem;
+    color: var(--color-oscuro);
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.drag-handle {
+    display: inline-block;
+    margin-right: 0.4rem;
+    opacity: 0.4;
+    font-size: 0.75rem;
+}
+
+input {
+    border: 0.1rem solid var(--color-iluminado);
+    padding: 0.5rem 1rem;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--color-oscuro);
+    outline: none;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    display: block;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right-circle-fill" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0M4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5z"/></svg>');
+    background-repeat: no-repeat;
+    background-size: 1rem;
+    background-position: 99% center;
+}
+
+input::placeholder {
+    color: var(--color-iluminado);
+}
+
+input:focus {
+    border-color: var(--color-normal);
+}
+
+div#contenedordetabla {
+    overflow-x: auto;
+    font-size: 90%;
+}
+
+table#tabla-buscador {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    margin-bottom: 3rem;
+}
+
+table#tabla-buscador thead {
+    background: var(--color-iluminadisimo);
+    color: var(--color-oscuro);
+}
+
+table#tabla-buscador tbody {
+    color: var(--color-normal);
+}
+
+table#tabla-buscador td,
+table#tabla-buscador th {
+    border: 1px solid var(--color-normal);
+    padding: 0.75rem;
+}
+
+table#tabla-buscador th:nth-child(1),
+table#tabla-buscador td:nth-child(1),
+table#tabla-buscador th:nth-child(4),
+table#tabla-buscador td:nth-child(4) {
+    text-align: center;
+}
+
+table#tabla-buscador td:nth-child(2) {
+    color: var(--color-oscuro);
+    font-weight: 800;
+}
+
+table#tabla-buscador td:nth-child(3) {
+    font-style: italic;
+}
+
+.btn-agregar {
+    font-family: var(--fuente);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--color-oscuro);
+    background: transparent;
+    color: var(--color-oscuro);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.btn-agregar:hover {
+    background: var(--color-oscuro);
+    color: white;
+}
+
+.btn-agregar:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-agregar.ya-agregado {
+    border-color: var(--color-iluminadisimo);
+    color: var(--color-iluminadisimo);
+}
+
+.btn-agregar.no-mencion {
+    border-color: var(--color-iluminado);
+    color: var(--color-iluminado);
+}
+
+.subtitulo-area {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: 0.03rem;
+    opacity: 0.6;
+    margin-top: 0.3rem;
+}
+
+.paso-sep {
+    border: none;
+    border-top: 1px dashed var(--color-iluminado);
+    margin: 1.5rem 0;
+}
+        </style>
+    </head>
+    <body>
+        <div id="contenedor">
+            <div id="planificador">
+
+                <p class="paso-titulo">Planificador</p>
+                    <div id="estado-vacio" style="display:none;text-align:left;color:var(--color-oscuro);font-size:0.82rem;padding:1.5rem 0 0.5rem;">Selecciona una mención para comenzar</div>
+            
+                <div class="menciones-btns">
+                    <button class="btn-mencion" data-mencion="V y M">Visualidad y Medios</button>
+                    <button class="btn-mencion" data-mencion="I y S">Industrial y Servicios</button>
+                </div>
+                
+                <div id="contenedor-tabla-plan">
+                    <table id="tabla-plan">
+                        <thead>
+                            <tr id="fila-encabezados">
+                                <th style="width:2.5rem;cursor:default;">Electivos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="fila-troncal" id="fila-troncal">
+                                <td class="celda-fija">Troncal</td>
+                            </tr>
+
+                            <tr class="fila-electivo" id="fila-e1">
+                                <td class="celda-fija">Opcional</td></tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+    <p id="instruccion-paso2" style="display:none;font-size:0.78rem;color:var(--color-oscuro);margin-bottom:1rem;">Usa el botón <strong>+ Agregar</strong> en el buscador. Arrastra los encabezados para reordenar.</p>
+
+</div>
+
+            <h2>Buscador de electivos</h2>
+
+            <input type="text" id="elInput" placeholder="Buscar por área, asignatura o mención…" />
+
+            <div id="contenedordetabla">
+                <table id="tabla-buscador">
+                    <thead>
+                        <tr>
+                            <th>Mención</th>
+                            <th>Área de Formación</th>
+                            <th>Asignatura Electiva</th>
+                            <th>Enfoque</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="este"></tbody>
+                </table>
+            </div>
+
+            <small>Diseño y visualización de información</small>
+        </div>
+
+        <script>
+
+const TRONCALES = {
+    "V y M": [
+        "Diseño editorial y publicación",
+        "Diseño y visualización de información",
+        "Diseño de interacción y experiencia"
+    ],
+    "I y S": [
+        "Prototipado y comunicación de experiencias y servicios",
+        "Materiales, tecnologías y Procesos de fabricación",
+        "Modelamiento y representación digital"
+    ]
+};
+
+const TRONCALES_AREA = {
+    "V y M": [
+        "Comunicación y Gestión del Diseño",
+        "Comunicación y Gestión del Diseño",
+        "Comunicación y Gestión del Diseño"
+    ],
+    "I y S": [
+        "Comunicación y Gestión del Diseño",
+        "Ciencia y Tecnología",
+        "Ciencia y Tecnología"
+    ]
+};
+
+
+let mencionActiva   = null;    // "V y M" | "I y S" | "Ambas" | null
+let columnas        = [];      // orden de índices 0,1,2
+let electivos       = [null, null, null]; // hasta 3 electivos elegidos {mencion,area,electivo,enfoque}
+let dragSrcIdx      = null;
+
+
+const tbody        = document.querySelector("#este");
+const URL_API      = "https://api.myjson.online/v1/records/79742d90-1720-4297-87e0-5ce5927429e7";
+let todosLosDatos  = [];
+
+fetch(URL_API)
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(datos => {
+        todosLosDatos = datos.data;
+        renderBuscador(todosLosDatos);
+    })
+    .catch(err => console.error("Error cargando datos:", err));
+
+function renderBuscador(lista) {
+    tbody.innerHTML = "";
+    lista.forEach(x => {
+        const tr = document.createElement("tr");
+        if (x.ok == 1) {
+            tr.style.cssText = "background-color: var(--color-iluminadisimo); color: var(--color-oscurisimo)";
+        }
+
+        const yaAgregado   = electivos.some(e => e && e.electivo === x.electivo);
+        const sinSlots     = electivos.every(e => e !== null);
+        const mencionOk    = !mencionActiva || x.mencion === mencionActiva || x.mencion === "Ambas";
+        const deshabilitado = yaAgregado || (sinSlots && !yaAgregado) || !mencionOk;
+
+        tr.innerHTML = `
+            <td>${x.mencion}</td>
+            <td>${x.area}</td>
+            <td>${x.electivo}</td>
+            <td>${x.enfoque}</td>
+            <td style="text-align:center;white-space:nowrap;">
+                <button class="btn-agregar${yaAgregado ? " ya-agregado" : (!mencionOk ? " no-mencion" : "")}"
+                        data-electivo='${JSON.stringify(x).replace(/'/g, "&#39;")}'
+                        ${deshabilitado ? "disabled" : ""}>
+                    ${yaAgregado ? "✓" : (!mencionOk ? "—" : "+ Agregar")}
+                </button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+
+
+    tbody.querySelectorAll(".btn-agregar").forEach(btn => {
+        btn.addEventListener("click", function() {
+            if (this.disabled) return;
+            const data = JSON.parse(this.getAttribute("data-electivo"));
+            agregarElectivo(data);
+        });
+    });
+}
+
+            
+function sinAcentos(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+document.getElementById("elInput").addEventListener("keyup", function () {
+    const valor = sinAcentos(this.value.toLowerCase());
+    document.querySelectorAll("#este tr").forEach(fila => {
+        fila.style.display = sinAcentos(fila.textContent.toLowerCase()).includes(valor) ? "" : "none";
+    });
+});
+
+
+document.querySelectorAll(".btn-mencion").forEach(btn => {
+    btn.addEventListener("click", function() {
+        mencionActiva = this.dataset.mencion;
+        document.querySelectorAll(".btn-mencion").forEach(b => b.classList.remove("activo"));
+        this.classList.add("activo");
+
+        // Resetear electivos al cambiar mención
+        electivos = [null, null, null];
+        columnas  = [0, 1, 2];
+
+        renderTablaPlan();
+        renderBuscador(todosLosDatos);
+        document.getElementById("instruccion-paso2").style.display = "block";
+        document.getElementById("estado-vacio").style.display = "none";
+    });
+});
+
+function renderTablaPlan() {
+    if (!mencionActiva) {
+        document.getElementById("estado-vacio").style.display = "block";
+        return;
+    }
+
+    const troncales     = TRONCALES[mencionActiva];
+    const troncalesArea = TRONCALES_AREA[mencionActiva];
+
+    const filaEnc = document.getElementById("fila-encabezados");
+    while (filaEnc.children.length > 1) filaEnc.removeChild(filaEnc.lastChild);
+
+    columnas.forEach((colIdx, posicion) => {
+        const th = document.createElement("th");
+        th.classList.add("col-arrastrable");
+        th.dataset.colidx = colIdx;
+        th.draggable = true;
+        th.innerHTML = `<span class="drag-handle">⠿</span><span class="col-num">${posicion + 1}</span> Electivo ${posicion + 1}`;
+
+        th.addEventListener("dragstart", onDragStart);
+        th.addEventListener("dragover",  onDragOver);
+        th.addEventListener("drop",      onDrop);
+        th.addEventListener("dragend",   onDragEnd);
+
+        filaEnc.appendChild(th);
+    });
+
+    const filaTroncal = document.getElementById("fila-troncal");
+    while (filaTroncal.children.length > 1) filaTroncal.removeChild(filaTroncal.lastChild);
+
+    columnas.forEach(colIdx => {
+        const td = document.createElement("td");
+        td.innerHTML = `${troncales[colIdx] || "—"}<span class="subtitulo-area">${troncalesArea[colIdx] || ""}</span>`;
+        filaTroncal.appendChild(td);
+    });
+
+    
+    const filaOpc = document.getElementById("fila-e1");
+    while (filaOpc.children.length > 1) filaOpc.removeChild(filaOpc.lastChild);
+
+    columnas.forEach((colIdx, posicion) => {
+        const elec = electivos[colIdx];
+        const td   = document.createElement("td");
+
+        if (!elec) {
+            td.classList.add("celda-vacia");
+            td.textContent = "— vacío —";
+        } else {
+            td.innerHTML = `${elec.electivo}<span class="subtitulo-area">${elec.area}</span>`;
+
+            const btn = document.createElement("button");
+            btn.className = "btn-quitar";
+            btn.title = "Quitar electivo";
+            btn.textContent = "✕";
+            btn.addEventListener("click", () => {
+                electivos[colIdx] = null;
+                renderTablaPlan();
+                renderBuscador(todosLosDatos);
+            });
+            td.appendChild(btn);
+        }
+
+        filaOpc.appendChild(td);
+    });
+}
+
+
+function agregarElectivo(data) {
+    if (!mencionActiva) {
+        alert("Primero selecciona una mención.");
+        return;
+    }
+
+    const slotLibre = columnas.find(colIdx => electivos[colIdx] === null);
+    if (slotLibre === undefined) return;
+
+    electivos[slotLibre] = {
+        mencion:  data.mencion,
+        area:     data.area,
+        electivo: data.electivo,
+        enfoque:  data.enfoque
+    };
+
+    renderTablaPlan();
+    renderBuscador(todosLosDatos);
+}
+
+
+function onDragStart(e) {
+    dragSrcIdx = parseInt(this.dataset.colidx);
+    e.dataTransfer.effectAllowed = "move";
+    this.style.opacity = "0.5";
+}
+
+function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    document.querySelectorAll(".col-arrastrable").forEach(th => th.classList.remove("dragging-over"));
+    this.classList.add("dragging-over");
+}
+
+function onDrop(e) {
+    e.stopPropagation();
+    const targetIdx = parseInt(this.dataset.colidx);
+    if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+
+    const srcPos = columnas.indexOf(dragSrcIdx);
+    const tgtPos = columnas.indexOf(targetIdx);
+    [columnas[srcPos], columnas[tgtPos]] = [columnas[tgtPos], columnas[srcPos]];
+
+    renderTablaPlan();
+}
+
+function onDragEnd(e) {
+    this.style.opacity = "";
+    document.querySelectorAll(".col-arrastrable").forEach(th => {
+        th.classList.remove("dragging-over");
+    });
+    dragSrcIdx = null;
+}
+
+
+document.getElementById("estado-vacio").style.display = "block";
+columnas = [0, 1, 2];
+
+        </script>
+    </body>
+</html>
